@@ -173,7 +173,6 @@ export default function ToDo() {
           };
         }
         case "SaveEditToDo": {
-          console.log("action", action.toDoList[index]);
           const actualToDoList = [...state.toDoList];
           actualToDoList[index] = {
             id: action.toDoList[index].id,
@@ -326,7 +325,6 @@ const ToDoItem = ({
   value,
 }) => {
   const changeText = (event) => {
-    console.log(event.target);
     onChange(event.target.value);
   };
   return toDoList.map((element) => {
