@@ -1,5 +1,6 @@
-import { useContext, useReducer } from "react";
+import { useReducer, useState } from "react";
 
+let IDNUMBER = 3;
 export default function ToDo() {
   const toDoListArray = [
     {
@@ -8,13 +9,15 @@ export default function ToDo() {
       orderValue: 0,
       delete: false,
       checked: false,
+      editting: false,
     },
     {
       id: 1,
       content: "Teste 2",
       orderValue: 1,
       delete: false,
-      checked: false,
+      checked: true,
+      editting: false,
     },
     {
       id: 2,
@@ -22,6 +25,7 @@ export default function ToDo() {
       orderValue: 2,
       delete: false,
       checked: false,
+      editting: false,
     },
   ];
 
@@ -31,38 +35,23 @@ export default function ToDo() {
     orderValue: null,
     delete: false,
     checked: false,
-  };
-
-  const ToDoItem = ({ toDoList, moveToDo }) => {
-    return toDoList.map((element) => (
-      <div
-        key={element.id}
-        style={{ margin: "8px", border: "1px solid", padding: "8px" }}
-      >
-        <p>{element.orderValue}</p>
-        <button onClick={() => moveToDo("UP", element.id)}>^</button>
-        <input type="checkbox" />
-        <button onClick={() => moveToDo("DOWN", element.id)}>v</button>
-        <p>{element.content}</p>
-        <button>Edit</button>
-        <button>X</button>
-      </div>
-    ));
+    editting: false,
   };
 
   const reducerElement = {
     actualCommand: "",
     id: null,
+    text: "",
     toDoList: toDoListArray,
   };
 
   const reducer = (state, action) => {
     if (action.toDoList !== undefined) {
+      const index = state.toDoList.findIndex(
+        (element) => element.id === action.id
+      );
       switch (action.actualCommand) {
         case "MoveUp": {
-          const index = state.toDoList.findIndex(
-            (element) => element.id === action.id
-          );
           if (index === 0) {
             return { ...state };
           }
@@ -83,12 +72,8 @@ export default function ToDo() {
             id: null,
             toDoList: actualToDoList,
           };
-          break;
         }
         case "MoveDown": {
-          const index = state.toDoList.findIndex(
-            (element) => element.id === action.id
-          );
           if (index === state.toDoList.length - 1) {
             return { ...state };
           }
@@ -109,10 +94,94 @@ export default function ToDo() {
             id: null,
             toDoList: actualToDoList,
           };
-          break;
         }
         case "Check": {
-          break;
+          const actualToDoList = [...state.toDoList];
+          const checkedToDoItem = actualToDoList[index];
+          actualToDoList.splice(index, 1, {
+            ...checkedToDoItem,
+            checked: !actualToDoList[index].checked,
+          });
+          return {
+            ...state,
+            actualCommand: "",
+            toDoList: actualToDoList,
+          };
+        }
+        case "AddToDoBlank": {
+          const actualToDoList = [...state.toDoList];
+          const newToDoItem = actualToDoList.concat(toDoItemInitial);
+          return {
+            ...state,
+            actualCommand: "AddToDoBlank",
+            toDoList: newToDoItem,
+          };
+        }
+        case "CancelNew": {
+          const actualToDoList = [...state.toDoList];
+          actualToDoList.pop();
+          return {
+            ...state,
+            actualCommand: "",
+            toDoList: actualToDoList,
+          };
+        }
+        case "SaveToDo": {
+          const actualToDoList = [...state.toDoList];
+          actualToDoList[actualToDoList.length - 1] = {
+            id: IDNUMBER,
+            content: action.text,
+            orderValue: actualToDoList.length - 1,
+            delete: false,
+            checked: false,
+            editting: false,
+          };
+          IDNUMBER++; //Mudar depois!!
+          return {
+            ...state,
+            actualCommand: "",
+            text: "",
+            toDoList: actualToDoList,
+          };
+        }
+        case "RemoveToDoItem": {
+          const actualToDoList = [...state.toDoList];
+          actualToDoList.splice(index, 1);
+          return {
+            ...state,
+            actualCommand: "",
+            id: null,
+            toDoList: actualToDoList,
+          };
+        }
+        case "EditToDo": {
+          const actualToDoList = [...state.toDoList];
+          actualToDoList[index] = { ...actualToDoList[index], editting: true };
+          return {
+            ...state,
+            actualCommand: "",
+            text: "",
+            toDoList: actualToDoList,
+          };
+        }
+        case "SaveEditToDo": {
+          console.log("action", action.toDoList[index]);
+          const actualToDoList = [...state.toDoList];
+          actualToDoList[index] = {
+            id: action.toDoList[index].id,
+            content: action.text,
+            orderValue: state.toDoList[index].orderValue,
+            delete: false,
+            checked: false,
+            editting: false,
+          };
+
+          return {
+            ...state,
+            actualCommand: "",
+            text: "",
+            toDoList: actualToDoList,
+          };
         }
         default:
           break;
@@ -122,6 +191,7 @@ export default function ToDo() {
   };
 
   const [state, dispatch] = useReducer(reducer, reducerElement);
+  const [textToDo, setTextToDo] = useState(toDoItemInitial.content);
 
   const moveToDo = (direction, id) => {
     if (direction === "UP") {
@@ -136,13 +206,39 @@ export default function ToDo() {
     dispatch({ ...state, id: id, actualCommand: "Check" });
     return;
   };
-  const editToDo = () => {
+  const editToDo = (id) => {
+    const index = state.toDoList.findIndex((element) => element.id === id);
+    setTextToDo(String(state.toDoList[index].content));
+
+    dispatch({ ...state, id: id, actualCommand: "EditToDo" });
     return;
   };
   const addToDo = () => {
+    dispatch({ ...state, actualCommand: "AddToDoBlank" });
     return;
   };
-  const removeToDo = () => {
+  const cancelNewToDo = () => {
+    dispatch({ ...state, actualCommand: "CancelNew" });
+    setTextToDo("");
+    return;
+  };
+  const cancelEditToDo = (id) => {
+    dispatch({ ...state, id: id, actualCommand: "CancelEdit" });
+    return;
+  };
+  const removeToDo = (id) => {
+    dispatch({ ...state, id: id, actualCommand: "RemoveToDoItem" });
+    return;
+  };
+  const saveToDo = (text) => {
+    dispatch({ ...state, text: text, actualCommand: "SaveToDo" });
+    setTextToDo("");
+    return;
+  };
+  const saveEditToDo = (id, text) => {
+    dispatch({ ...state, id: id, text: text, actualCommand: "SaveEditToDo" });
+    setTextToDo("");
+
     return;
   };
 
@@ -150,9 +246,110 @@ export default function ToDo() {
     <>
       <div style={{ margin: "8px", border: "1px solid", padding: "8px" }}>
         <p>ToDoContainer</p>
-        <ToDoItem toDoList={state.toDoList} moveToDo={moveToDo} />
-        <button>+</button>
+        <ToDoItem
+          toDoList={state.toDoList}
+          moveToDo={moveToDo}
+          checkToDo={checkToDo}
+          removeToDo={removeToDo}
+          editToDo={editToDo}
+          saveEditToDo={saveEditToDo}
+          onChange={(value) => {
+            setTextToDo(value);
+          }}
+          value={textToDo}
+        />
+        {state.actualCommand === "AddToDoBlank" && (
+          <AddedToDoItem
+            onChange={(value) => {
+              setTextToDo(value);
+            }}
+            value={textToDo}
+            save={saveToDo}
+            cancel={cancelNewToDo}
+          />
+        )}
+        {state.actualCommand !== "AddToDoBlank" && (
+          <button onClick={() => addToDo()}>+</button>
+        )}
       </div>
     </>
   );
 }
+
+const AddedToDoItem = ({ save, cancel, onChange, value }) => {
+  const changeText = (event) => {
+    onChange(event.target.value);
+  };
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        save(value);
+      }}
+      style={{ margin: "8px", border: "1px solid", padding: "8px" }}
+    >
+      <label>
+        <input
+          type="text"
+          name="toDoText"
+          value={value}
+          placeholder="Insira seu texto aqui..."
+          onChange={changeText}
+        />
+      </label>
+      <button type="submit">SAVE</button>
+      <button type="button" onClick={() => cancel()}>
+        CANCEL
+      </button>
+    </form>
+  );
+};
+
+const ToDoItem = ({
+  toDoList,
+  moveToDo,
+  checkToDo,
+  removeToDo,
+  editToDo,
+  saveEditToDo,
+  onChange,
+  value,
+}) => {
+  const changeText = (event) => {
+    console.log(event.target);
+    onChange(event.target.value);
+  };
+  return toDoList.map((element) => {
+    return element.id !== null ? (
+      <div
+        key={element.id}
+        style={{ margin: "8px", border: "1px solid", padding: "8px" }}
+      >
+        <button onClick={() => moveToDo("UP", element.id)}>^</button>
+        <input
+          type="checkbox"
+          onChange={() => checkToDo(element.id)}
+          checked={element.checked}
+        />
+        <button onClick={() => moveToDo("DOWN", element.id)}>v</button>
+        {element.editting ? (
+          <input
+            type="text"
+            name="toDoText"
+            value={value}
+            placeholder="Insira seu texto aqui..."
+            onChange={changeText}
+          />
+        ) : (
+          <p>{element.content}</p>
+        )}
+        {element.editting ? (
+          <button onClick={() => saveEditToDo(element.id, value)}>EDIT</button>
+        ) : (
+          <button onClick={() => editToDo(element.id)}>Edit</button>
+        )}
+        <button onClick={() => removeToDo(element.id)}>X</button>
+      </div>
+    ) : null;
+  });
+};
