@@ -126,6 +126,14 @@ export default function ToDo() {
             toDoList: actualToDoList,
           };
         }
+        case "CancelEdit": {
+          const actualToDoList = [...state.toDoList];
+          actualToDoList[index] = { ...actualToDoList[index], editting: false };
+          return {
+            ...state,
+            toDoList: actualToDoList,
+          };
+        }
         case "SaveToDo": {
           const actualToDoList = [...state.toDoList];
           actualToDoList[actualToDoList.length - 1] = {
@@ -253,6 +261,7 @@ export default function ToDo() {
           removeToDo={removeToDo}
           editToDo={editToDo}
           saveEditToDo={saveEditToDo}
+          cancelEditToDo={cancelEditToDo}
           onChange={(value) => {
             setTextToDo(value);
           }}
@@ -313,6 +322,7 @@ const ToDoItem = ({
   editToDo,
   saveEditToDo,
   onChange,
+  cancelEditToDo,
   value,
 }) => {
   const changeText = (event) => {
@@ -348,7 +358,14 @@ const ToDoItem = ({
         ) : (
           <button onClick={() => editToDo(element.id)}>Edit</button>
         )}
-        <button onClick={() => removeToDo(element.id)}>X</button>
+
+        {element.editting ? (
+          <button type="button" onClick={() => cancelEditToDo(element.id)}>
+            CANCEL
+          </button>
+        ) : (
+          <button onClick={() => removeToDo(element.id)}>X</button>
+        )}
       </div>
     ) : null;
   });
