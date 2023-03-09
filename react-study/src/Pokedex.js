@@ -108,6 +108,7 @@ function CardPokemonComponent({ name, id, image, types }) {
         padding: "8px",
       }}
     >
+      <h2>{id}</h2>
       <img src={image} alt="imagem do pokemon" />
       <Link to={"/pokedex/pokemon/".concat(id)}>{name}</Link>
       {types.map(({ type }) => (
@@ -264,6 +265,7 @@ function PokemonInfoComponent({ name, id, image, types, infos }) {
         }}
       >
         <img src={image} alt="imagem do pokemon" />
+        <h2>{id}</h2>
         <h3>{name}</h3>
         {types.map(({ type }) => (
           <h3>{type.name}</h3>
@@ -344,10 +346,17 @@ function PokemonEvolutionsContainer({ id }) {
     pokemonEvolChain !== undefined
       ? findEvolutions(pokemonEvolChain?.chain, pokemonSpecies.name)
       : [];
+
+  const idFromSpecies =
+    pokemonSpecies.evolves_from_species !== null
+      ? pokemonSpecies.evolves_from_species.url.split("/")
+      : null;
+
   return (
     <>
       <h1>Evoluiu de:</h1>
-      {pokemonSpecies.evolves_from_species !== null ? (
+      {pokemonSpecies.evolves_from_species !== null &&
+      idFromSpecies[6] <= 151 ? (
         <PokemonEvolutionsComponent
           id={pokemonSpecies.evolves_from_species.name}
           key={"pokeEvolutionID".concat(
@@ -355,7 +364,7 @@ function PokemonEvolutionsContainer({ id }) {
           )}
         />
       ) : (
-        <h2>Não possui Evolução previa</h2>
+        <h2>Não possui Evolução</h2>
       )}
       <h1>Evolui para:</h1>
       {pokemonEvolChain?.chain.evolves_to.length !== 0 &&
@@ -367,7 +376,7 @@ function PokemonEvolutionsContainer({ id }) {
           />
         ))
       ) : (
-        <h2>Não possui Evolução futura</h2>
+        <h2>Não possui Evolução</h2>
       )}
     </>
   );
@@ -396,9 +405,11 @@ function PokemonEvolutionsComponent({ id }) {
       loadPokemon(id);
     }
   }, [loadPokemon, isLoading, id]);
+
   if (isLoading) return <h1>Loading</h1>;
   if (isError) return <h1>Error</h1>;
-  return (
+
+  return pokemon.id <= 151 ? (
     <div
       key={"PokeEvolution".concat(pokemon.id)}
       style={{
@@ -412,6 +423,8 @@ function PokemonEvolutionsComponent({ id }) {
         {"ID#".concat(pokemon.id).concat(" ").concat(pokemon.name)}
       </Link>
     </div>
+  ) : (
+    <></>
   );
 }
 
