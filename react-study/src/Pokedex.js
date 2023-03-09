@@ -6,6 +6,14 @@ import {
   useCallback,
 } from "react";
 
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  Link,
+  useParams,
+} from "react-router-dom";
+
 const PokedexStore = createContext();
 const PokedexStoreProvider = ({ children }) => {
   const [pokedexData, setPokedexData] = useState([]);
@@ -101,7 +109,7 @@ function CardPokemonComponent({ name, id, image, types }) {
       }}
     >
       <img src={image} alt="imagem do pokemon" />
-      <h3>{name}</h3>
+      <Link to={"/pokedex/pokemon/".concat(id)}>{name}</Link>
       {types.map(({ type }) => (
         <h3>{type.name}</h3>
       ))}
@@ -190,10 +198,236 @@ function SearchPokemon() {
     );
 }
 
+function NavBar() {
+  return (
+    <nav>
+      <ul>
+        <li>
+          <Link to="/pokedex">Pokedex</Link>
+        </li>
+      </ul>
+    </nav>
+  );
+}
+
+function PokemonInfoContainer() {
+  const [pokemonInfo, setPokemonInfo] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  const linkParams = useParams();
+  const pokemonId = linkParams.id;
+
+  const loadPokemonInfo = useCallback((pokeID) => {
+    fetch("https://pokeapi.co/api/v2/pokemon/".concat(pokeID))
+      .then((response) => response.json())
+      .then((data) => {
+        setPokemonInfo(data);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+        setIsError(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) {
+      loadPokemonInfo(pokemonId);
+    }
+  }, [loadPokemonInfo, isLoading, pokemonId]);
+
+  if (isLoading) return <h1>Loading</h1>;
+  if (isError) return <h1>Error</h1>;
+  return pokemonInfo.name ? (
+    <>
+      <PokemonInfoComponent
+        name={pokemonInfo.name}
+        image={pokemonInfo.sprites.front_default}
+        types={pokemonInfo.types}
+        id={pokemonInfo.id}
+        infos={pokemonInfo}
+        key={"pokeInfoCompID".concat(pokemonInfo.id)}
+      />
+      <PokemonEvolutionsContainer id={pokemonInfo.id} />
+    </>
+  ) : null;
+}
+function PokemonInfoComponent({ name, id, image, types, infos }) {
+  return (
+    <>
+      <div
+        key={id}
+        style={{
+          margin: "8px",
+          border: "1px solid",
+          padding: "8px",
+        }}
+      >
+        <img src={image} alt="imagem do pokemon" />
+        <h3>{name}</h3>
+        {types.map(({ type }) => (
+          <h3>{type.name}</h3>
+        ))}
+        <h3>{"Altura: ".concat(infos.height).concat("dm")}</h3>
+        <h3>{"Peso: ".concat(infos.weight).concat("hg")}</h3>
+        <h3>{"Habilidade: ".concat(infos.abilities[0].ability.name)}</h3>
+      </div>
+    </>
+  );
+}
+function PokemonEvolutionsContainer({ id }) {
+  const [pokemonSpecies, setPokemonSpecies] = useState(undefined);
+  const [pokemonEvolChain, setPokemonEvolChain] = useState(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+
+  const loadPokemonSpecies = useCallback((pokeID) => {
+    fetch("https://pokeapi.co/api/v2/pokemon-species/".concat(pokeID))
+      .then((response) => response.json())
+      .then((data) => {
+        setPokemonSpecies(data);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+        setIsError(true);
+      });
+  }, []);
+
+  const loadPokemonEvolChain = useCallback((url) => {
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        setPokemonEvolChain(data);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+        setIsError(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) {
+      loadPokemonSpecies(id);
+    }
+  }, [loadPokemonSpecies, isLoading, id]);
+
+  useEffect(() => {
+    if (pokemonSpecies) {
+      loadPokemonEvolChain(pokemonSpecies.evolution_chain.url);
+    }
+  }, [loadPokemonEvolChain, pokemonSpecies]);
+
+  function findEvolutions(objectEvolve, currentPokeName) {
+    if (objectEvolve.species.name === currentPokeName) {
+      if (objectEvolve.evolves_to.length !== 0) {
+        return objectEvolve.evolves_to.map((element) => {
+          return element.species.name;
+        });
+      }
+      return [];
+    }
+
+    return objectEvolve.evolves_to.reduce((acc, current) => {
+      if (current !== undefined) {
+        return findEvolutions(current, currentPokeName);
+      }
+      return acc ?? [];
+    }, []);
+  }
+
+  if (isLoading) return <h1>Loading</h1>;
+  if (isError) return <h1>Error</h1>;
+
+  const evolutionNames =
+    pokemonEvolChain !== undefined
+      ? findEvolutions(pokemonEvolChain?.chain, pokemonSpecies.name)
+      : [];
+  return (
+    <>
+      <h1>Evoluiu de:</h1>
+      {pokemonSpecies.evolves_from_species !== null ? (
+        <PokemonEvolutionsComponent
+          id={pokemonSpecies.evolves_from_species.name}
+          key={"pokeEvolutionID".concat(
+            pokemonSpecies.evolves_from_species.name
+          )}
+        />
+      ) : (
+        <h2>Não possui Evolução previa</h2>
+      )}
+      <h1>Evolui para:</h1>
+      {pokemonEvolChain?.chain.evolves_to.length !== 0 &&
+      evolutionNames.length !== 0 ? (
+        evolutionNames.map((element) => (
+          <PokemonEvolutionsComponent
+            id={element}
+            key={"pokeEvolutionID".concat(element)}
+          />
+        ))
+      ) : (
+        <h2>Não possui Evolução futura</h2>
+      )}
+    </>
+  );
+}
+
+function PokemonEvolutionsComponent({ id }) {
+  const [pokemon, setPokemon] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+
+  const loadPokemon = useCallback((pokeID) => {
+    fetch("https://pokeapi.co/api/v2/pokemon/".concat(pokeID))
+      .then((response) => response.json())
+      .then((data) => {
+        setPokemon(data);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+        setIsError(true);
+      }); //Colocar um tryAgain
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) {
+      loadPokemon(id);
+    }
+  }, [loadPokemon, isLoading, id]);
+  if (isLoading) return <h1>Loading</h1>;
+  if (isError) return <h1>Error</h1>;
+  return (
+    <div
+      key={"PokeEvolution".concat(pokemon.id)}
+      style={{
+        margin: "8px",
+        border: "1px solid",
+        padding: "8px",
+      }}
+    >
+      <img src={pokemon.sprites.front_default} alt="imagem do pokemon" />
+      <Link reloadDocument to={"/pokedex/pokemon/".concat(pokemon.id)}>
+        {"ID#".concat(pokemon.id).concat(" ").concat(pokemon.name)}
+      </Link>
+    </div>
+  );
+}
+
 export default function PokedexApp() {
   return (
-    <PokedexStoreProvider>
-      <Pokedex key="pokedex" />
-    </PokedexStoreProvider>
+    <BrowserRouter>
+      <PokedexStoreProvider>
+        <NavBar />
+        <Routes>
+          <Route path="/pokedex" element={<Pokedex key="pokedex" />} />
+          <Route
+            path="/pokedex/pokemon/:id"
+            element={<PokemonInfoContainer key="pokeInfo" />}
+          />
+        </Routes>
+      </PokedexStoreProvider>
+    </BrowserRouter>
   );
 }
