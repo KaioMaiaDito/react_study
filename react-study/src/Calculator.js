@@ -65,7 +65,8 @@ export default function Calculator() {
       case "calculator/UPSERT_OPERATOR": {
         if (
           state.operationArray.length === 0 &&
-          state.acumulatedDigits.length === 0
+          state.acumulatedDigits.length === 0 &&
+          condition.payload.digit === "-"
         ) {
           return {
             ...state,
