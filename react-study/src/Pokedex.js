@@ -14,6 +14,8 @@ import {
   useParams,
 } from "react-router-dom";
 
+//usar o AbortController na requisição do fetch da API pra caso tenha outras requisições ele aborte a anterior
+
 const PokedexStore = createContext();
 const PokedexStoreProvider = ({ children }) => {
   const [pokedexData, setPokedexData] = useState([]);

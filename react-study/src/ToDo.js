@@ -1,5 +1,7 @@
 import { useReducer, useState } from "react";
 
+//Usar useRef na hora de digitar o conteúdo do ToDo para não ficar consumindo memória com o onChange
+
 let IDNUMBER = 3;
 export default function ToDo() {
   const toDoListArray = [
