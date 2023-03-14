@@ -1,23 +1,12 @@
 import { useReducer, useState } from "react";
 
 export default function Calculator() {
-  /* 
-  A calculadora tem os seguintes estados
-  0 - Vazio 
-  1 - Acumulando Digitos -> Operador
-  2 - Recebendo Operador -> Digito
-  3 - Acumulando Digitos (Pode voltar ao estado 2) -> Operador ou Igual
-  4 - Mostrar o Resultado ou Erro
-  */
-
   const initialState = {
     digit: null,
     acumulatedDigits: [],
     displayEquation: [],
     operationArray: [],
   };
-
-  const operators = ["-", "+", "/", "*", "="];
 
   const [error, setError] = useState(false);
 
@@ -43,9 +32,11 @@ export default function Calculator() {
   const reducer = (state, condition) => {
     switch (condition.action) {
       case "calculator/CLEAR_ALL": {
+        setError(false);
         return initialState;
       }
       case "calculator/INSERT_DIGIT": {
+        setError(false);
         return {
           ...state,
           displayEquation: [
@@ -139,6 +130,7 @@ export default function Calculator() {
             displayEquation: Result.toString().split(""),
           };
         }
+        setError(true);
         return initialState;
       }
       default:
@@ -218,6 +210,7 @@ export default function Calculator() {
           <button onClick={() => enterDigit(0)}>0</button>
           <button onClick={() => enterResult()}>=</button>
         </div>
+        {error === true ? <h3>ERROR</h3> : <></>}
       </div>
     </>
   );
