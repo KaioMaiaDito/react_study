@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 
 export default function Calculator() {
   /* 
@@ -11,14 +11,15 @@ export default function Calculator() {
   */
 
   const initialState = {
-    actualState: "AcumulatingDigitsFirst",
     digit: null,
-    operator: null,
-    displayEquation: [],
     acumulatedDigits: [],
+    displayEquation: [],
     operationArray: [],
-    showResult: false,
   };
+
+  const operators = ["-", "+", "/", "*", "="];
+
+  const [error, setError] = useState(false);
 
   const Calculate = (operationArray) => {
     return operationArray.reduce((acc, current, i, array) => {
@@ -39,173 +40,152 @@ export default function Calculator() {
     }, null);
   };
 
-  const reducer = (state, action) => {
-    switch (action.actualState) {
-      case "Clear": {
-        //console.log(action.actualState);
+  const reducer = (state, condition) => {
+    switch (condition.action) {
+      case "calculator/CLEAR_ALL": {
         return initialState;
       }
-      case "AcumulatingDigitsFirst": {
-        //console.log(action.actualState);
-        if (action.operator === "-" && action.acumulatedDigits.length === 0) {
-          return {
-            ...state,
-            displayEquation: [...state.displayEquation.concat(action.operator)],
-            acumulatedDigits: [
-              ...state.acumulatedDigits.concat(action.operator),
-            ],
-            operator: null,
-          };
-        }
-        if (action.digit !== null) {
-          return {
-            ...state,
-            displayEquation: [...state.displayEquation.concat(action.digit)],
-            acumulatedDigits: [...state.acumulatedDigits.concat(action.digit)],
-            digit: null,
-          };
-        }
-        if (action.operator !== null) {
-          return {
-            ...state,
-            displayEquation: [...state.displayEquation.concat(action.operator)],
-            operationArray: [state.acumulatedDigits.join("")].concat(
-              action.operator
-            ),
-            acumulatedDigits: [],
-            actualState: "ReceivingOperator",
-            operator: action.operator,
-          };
-        }
-        break;
+      case "calculator/INSERT_DIGIT": {
+        return {
+          ...state,
+          displayEquation: [
+            ...state.displayEquation.concat(condition.payload.digit),
+          ],
+          acumulatedDigits: [
+            ...state.acumulatedDigits.concat(condition.payload.digit),
+          ],
+        };
       }
-      case "ReceivingOperator": {
-        //console.log(action.actualState);
-        if (action.digit !== null) {
+      case "calculator/FLUSH_DIGITS": {
+        if (
+          state.acumulatedDigits.length > 0 &&
+          state.acumulatedDigits !== "-"
+        ) {
           return {
             ...state,
-            displayEquation: [...state.displayEquation.concat(action.digit)],
-            acumulatedDigits: [...state.acumulatedDigits.concat(action.digit)],
-            digit: null,
-            actualState: "AcumulatingDigitsSecond",
+            operationArray: [
+              ...state.operationArray.concat(state.acumulatedDigits.join("")),
+            ],
+            acumulatedDigits: [],
           };
         }
-        if (action.operator !== null && action.operator !== "-") {
-          const newDisplayEquation = [...state.displayEquation];
-          newDisplayEquation[newDisplayEquation.length - 1] = action.operator;
-
+        return { ...state };
+      }
+      case "calculator/UPSERT_OPERATOR": {
+        if (
+          state.operationArray.length === 0 &&
+          state.acumulatedDigits.length === 0
+        ) {
+          return {
+            ...state,
+            displayEquation: [
+              ...state.displayEquation.concat(condition.payload.digit),
+            ],
+            acumulatedDigits: [
+              ...state.acumulatedDigits.concat(condition.payload.digit),
+            ],
+            digit: null,
+          };
+        } else if (
+          Number.isInteger(
+            +state.operationArray[state.operationArray.length - 1]
+          )
+        ) {
+          return {
+            ...state,
+            displayEquation: [
+              ...state.displayEquation.concat(condition.payload.digit),
+            ],
+            operationArray: [
+              ...state.operationArray.concat(condition.payload.digit),
+            ],
+          };
+        } else if (
+          state.operationArray[state.operationArray.length - 1] !== "+" &&
+          state.operationArray[state.operationArray.length - 1] !== "-" &&
+          condition.payload.digit === "-"
+        ) {
+          return {
+            ...state,
+            displayEquation: [
+              ...state.displayEquation.concat(condition.payload.digit),
+            ],
+            acumulatedDigits: [
+              ...state.acumulatedDigits.concat(condition.payload.digit),
+            ],
+          };
+        } else if (state.operationArray.length > 1) {
           const newOperationArray = [...state.operationArray];
-          newOperationArray[newOperationArray.length - 1] = action.operator;
-
+          newOperationArray[newOperationArray.length - 1] =
+            condition.payload.digit;
+          const newDisplayEquation = [...state.displayEquation];
+          newDisplayEquation[newDisplayEquation.length - 1] =
+            condition.payload.digit;
           return {
             ...state,
             displayEquation: newDisplayEquation,
             operationArray: newOperationArray,
-            operator: action.operator,
           };
         }
-        if (action.operator === "-") {
-          return {
-            ...state,
-            displayEquation: [...state.displayEquation.concat(action.operator)],
-            acumulatedDigits: [
-              ...state.acumulatedDigits.concat(action.operator),
-            ],
-            actualState: "AcumulatingDigitsSecond",
-          };
-        }
-
-        break;
+        return { ...state };
       }
-      case "AcumulatingDigitsSecond": {
-        //console.log(action.actualState);
-        if (action.digit !== null) {
+      case "calculator/SUBMIT": {
+        const Result = Calculate(state.operationArray);
+        if (Result !== "Error") {
           return {
             ...state,
-            displayEquation: [...state.displayEquation.concat(action.digit)],
-            acumulatedDigits: [...state.acumulatedDigits.concat(action.digit)],
-            digit: null,
-          };
-        }
-        if (action.showResult === true) {
-          const Result = Calculate(
-            action.operationArray.concat(state.acumulatedDigits.join(""))
-          );
-          return {
-            ...state,
-            displayEquation: [].concat(Result),
-            acumulatedDigits: [],
-            operationArray: [].concat(Result),
-            operator: null,
-            actualState: "ShowingResult",
-          };
-        }
-        if (action.operator !== null) {
-          return {
-            ...state,
-            displayEquation: [...state.displayEquation.concat(action.operator)],
-            operationArray: [
-              ...state.operationArray.concat(state.acumulatedDigits.join("")),
-              action.operator,
-            ],
-            acumulatedDigits: [],
-            actualState: "ReceivingOperator",
-            operator: action.operator,
-          };
-        }
-        break;
-      }
-      case "ShowingResult": {
-        //console.log(action.actualState);
-        console.log(state);
-        if (action.operator !== null) {
-          return {
-            ...state,
-            displayEquation: [...state.displayEquation].concat(action.operator),
-            operationArray: [...state.operationArray].concat(action.operator),
-            acumulatedDigits: [],
-            actualState: "ReceivingOperator",
-            operator: action.operator,
-          };
-        }
-        if (action.digit !== null) {
-          return {
-            ...state,
-            actualState: "AcumulatingDigitsFirst",
-            digit: null,
-            operator: null,
+            acumulatedDigits: Result.toString().split("").map(Number),
             operationArray: [],
-            showResult: false,
-            displayEquation: [].concat(action.digit),
-            acumulatedDigits: [].concat(action.digit),
+            displayEquation: Result.toString().split(""),
           };
         }
-        break;
-      }
-      case "ClearLast": {
-        break;
+        return initialState;
       }
       default:
         return { ...state };
     }
   };
-
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const enterDigit = (digitNumber) => {
-    dispatch({ ...state, digit: digitNumber });
+    dispatch({
+      action: "calculator/INSERT_DIGIT",
+      payload: {
+        digit: digitNumber,
+      },
+    });
   };
 
   const enterOperation = (operation) => {
-    dispatch({ ...state, operator: operation });
+    dispatch({
+      action: "calculator/FLUSH_DIGITS",
+      payload: {},
+    });
+
+    dispatch({
+      action: "calculator/UPSERT_OPERATOR",
+      payload: {
+        digit: operation,
+      },
+    });
   };
 
   const enterResult = () => {
-    dispatch({ ...state, showResult: true });
+    dispatch({
+      action: "calculator/FLUSH_DIGITS",
+      payload: {},
+    });
+    dispatch({
+      action: "calculator/SUBMIT",
+      payload: {},
+    });
   };
 
   const clearAll = () => {
-    dispatch({ ...state, actualState: "Clear" });
+    dispatch({
+      action: "calculator/CLEAR_ALL",
+      payload: {},
+    });
   };
 
   return (
