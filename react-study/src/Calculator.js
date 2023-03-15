@@ -1,15 +1,12 @@
 import { useReducer, useState } from "react";
+import styled from "styled-components";
 
 export default function Calculator() {
   const initialState = {
-    digit: null,
     acumulatedDigits: [],
-    displayEquation: [],
     operationArray: [],
   };
-
   const [error, setError] = useState(false);
-
   const Calculate = (operationArray) => {
     return operationArray.reduce((acc, current, i, array) => {
       switch (current) {
@@ -30,7 +27,11 @@ export default function Calculator() {
   };
 
   const reducer = (state, condition) => {
-    switch (condition.action) {
+    const { action, payload } = condition;
+    const lastOperation = state.operationArray[state.operationArray.length - 1];
+    const lastDigit = state.acumulatedDigits[state.acumulatedDigits.length - 1];
+
+    switch (action) {
       case "calculator/CLEAR_ALL": {
         setError(false);
         return initialState;
@@ -39,96 +40,104 @@ export default function Calculator() {
         setError(false);
         return {
           ...state,
-          displayEquation: [
-            ...state.displayEquation.concat(condition.payload.digit),
-          ],
-          acumulatedDigits: [
-            ...state.acumulatedDigits.concat(condition.payload.digit),
-          ],
+          acumulatedDigits: [...state.acumulatedDigits, payload.digit],
         };
       }
       case "calculator/FLUSH_DIGITS": {
         if (
           state.acumulatedDigits.length > 0 &&
-          state.acumulatedDigits !== "-"
+          state.acumulatedDigits.join("") !== "-"
         ) {
           return {
             ...state,
-            operationArray: [
-              ...state.operationArray.concat(state.acumulatedDigits.join("")),
-            ],
             acumulatedDigits: [],
+            operationArray: [
+              ...state.operationArray,
+              state.acumulatedDigits.join(""),
+            ],
           };
         }
         return { ...state };
       }
       case "calculator/UPSERT_OPERATOR": {
-        if (
-          state.operationArray.length === 0 &&
-          state.acumulatedDigits.length === 0 &&
-          condition.payload.digit === "-"
-        ) {
+        // * if isNumber(pilha[-1]) INSERT operations
+        // * else pilha[-1] !== '+' && payload.operator === '-' INSERT digits
+        // * else UPDATE operations
+        if (isNumber(lastOperation)) {
+          // inserir o operador em operations
           return {
             ...state,
-            displayEquation: [
-              ...state.displayEquation.concat(condition.payload.digit),
-            ],
-            acumulatedDigits: [
-              ...state.acumulatedDigits.concat(condition.payload.digit),
-            ],
-            digit: null,
+            operationArray: [...state.operationArray, payload.operator],
           };
         } else if (
-          Number.isInteger(
-            +state.operationArray[state.operationArray.length - 1]
-          )
+          !["-"].includes(lastOperation) &&
+          !["-"].includes(lastDigit) &&
+          payload.operator === "-"
         ) {
+          // inserir o menos no digits
           return {
             ...state,
-            displayEquation: [
-              ...state.displayEquation.concat(condition.payload.digit),
-            ],
+            acumulatedDigits: [...state.acumulatedDigits, payload.operator],
+          };
+        } else {
+          // substituir o ultimo operador no operations
+          return {
+            ...state,
+            acumulatedDigits: [],
             operationArray: [
-              ...state.operationArray.concat(condition.payload.digit),
+              ...state.operationArray.slice(0, state.operationArray.length - 1),
+              payload.operator,
             ],
-          };
-        } else if (
-          state.operationArray[state.operationArray.length - 1] !== "+" &&
-          state.operationArray[state.operationArray.length - 1] !== "-" &&
-          condition.payload.digit === "-"
-        ) {
-          return {
-            ...state,
-            displayEquation: [
-              ...state.displayEquation.concat(condition.payload.digit),
-            ],
-            acumulatedDigits: [
-              ...state.acumulatedDigits.concat(condition.payload.digit),
-            ],
-          };
-        } else if (state.operationArray.length > 1) {
-          const newOperationArray = [...state.operationArray];
-          newOperationArray[newOperationArray.length - 1] =
-            condition.payload.digit;
-          const newDisplayEquation = [...state.displayEquation];
-          newDisplayEquation[newDisplayEquation.length - 1] =
-            condition.payload.digit;
-          return {
-            ...state,
-            displayEquation: newDisplayEquation,
-            operationArray: newOperationArray,
           };
         }
-        return { ...state };
+
+        // if (
+        //   state.operationArray.length === 0 &&
+        //   state.acumulatedDigits.length === 0 &&
+        //   payload.operator === "-"
+        // ) {
+        //   return {
+        //     ...state,
+        //     acumulatedDigits: [...state.acumulatedDigits, payload.operator],
+        //   };
+        // } else if (
+        //   !isNaN(
+        //     parseInt(state.operationArray[state.operationArray.length - 1])
+        //   )
+        // ) {
+        //   return {
+        //     ...state,
+        //     operationArray: [...state.operationArray, payload.operator],
+        //   };
+        // } else if (
+        //   state.operationArray[state.operationArray.length - 1] !== "+" &&
+        //   state.operationArray[state.operationArray.length - 1] !== "-" &&
+        //   payload.operator === "-"
+        // ) {
+        //   return {
+        //     ...state,
+        //     acumulatedDigits: [
+        //       ...state.acumulatedDigits.concat(payload.operator),
+        //     ],
+        //   };
+        // } else if (state.operationArray.length > 1) {
+        //   const newOperationArray = [...state.operationArray];
+        //   newOperationArray[newOperationArray.length - 1] = payload.operator;
+
+        //   return {
+        //     ...state,
+        //     operationArray: newOperationArray,
+        //   };
+        // }
+        // return { ...state };
       }
       case "calculator/SUBMIT": {
         const Result = Calculate(state.operationArray);
         if (Result !== "Error") {
           return {
             ...state,
-            acumulatedDigits: Result.toString().split("").map(Number),
+            acumulatedDigits: [Result],
             operationArray: [],
-            displayEquation: Result.toString().split(""),
           };
         }
         setError(true);
@@ -158,7 +167,7 @@ export default function Calculator() {
     dispatch({
       action: "calculator/UPSERT_OPERATOR",
       payload: {
-        digit: operation,
+        operator: operation,
       },
     });
   };
@@ -181,38 +190,147 @@ export default function Calculator() {
     });
   };
 
+  const lastOperation = state.operationArray[state.operationArray.length - 1];
+
   return (
     <>
-      <div>
-        <p>{state.displayEquation}</p>
-        <div>
-          <button onClick={() => clearAll()}>Clear</button>
-          <button onClick={() => enterOperation("/")}>/</button>
-        </div>
-        <div>
-          <button onClick={() => enterDigit(1)}>1</button>
-          <button onClick={() => enterDigit(2)}>2</button>
-          <button onClick={() => enterDigit(3)}>3</button>
-          <button onClick={() => enterOperation("+")}>+</button>
-        </div>
-        <div>
-          <button onClick={() => enterDigit(4)}>4</button>
-          <button onClick={() => enterDigit(5)}>5</button>
-          <button onClick={() => enterDigit(6)}>6</button>
-          <button onClick={() => enterOperation("-")}>-</button>
-        </div>
-        <div>
-          <button onClick={() => enterDigit(7)}>7</button>
-          <button onClick={() => enterDigit(8)}>8</button>
-          <button onClick={() => enterDigit(9)}>9</button>
-          <button onClick={() => enterOperation("*")}>*</button>
-        </div>
-        <div>
-          <button onClick={() => enterDigit(0)}>0</button>
-          <button onClick={() => enterResult()}>=</button>
-        </div>
+      <CalculatorContainer>
+        <DisplayBox>
+          <span>{[...state.operationArray, ...state.acumulatedDigits]}</span>
+        </DisplayBox>
+
+        <Button area="clear" color="red" onClick={() => clearAll()}>
+          Clear
+        </Button>
+        <Button
+          area="dividir"
+          color="#E87F18"
+          fontColor="white"
+          disabled={lastOperation === "/" && !state.acumulatedDigits.length}
+          onClick={() => enterOperation("/")}
+        >
+          /
+        </Button>
+
+        <Button area="um" onClick={() => enterDigit(1)}>
+          1
+        </Button>
+        <Button area="dois" onClick={() => enterDigit(2)}>
+          2
+        </Button>
+        <Button area="tres" onClick={() => enterDigit(3)}>
+          3
+        </Button>
+        <Button
+          area="mais"
+          color="#E87F18"
+          fontColor="white"
+          disabled={lastOperation === "+" && !state.acumulatedDigits.length}
+          onClick={() => enterOperation("+")}
+        >
+          +
+        </Button>
+
+        <Button area="quatro" onClick={() => enterDigit(4)}>
+          4
+        </Button>
+        <Button area="cinco" onClick={() => enterDigit(5)}>
+          5
+        </Button>
+        <Button area="seis" onClick={() => enterDigit(6)}>
+          6
+        </Button>
+        <Button
+          area="menos"
+          color="#E87F18"
+          fontColor="white"
+          disabled={
+            (lastOperation === "-" && !state.acumulatedDigits.length) ||
+            state.acumulatedDigits.join("") === "-"
+          }
+          onClick={() => enterOperation("-")}
+        >
+          -
+        </Button>
+
+        <Button area="sete" onClick={() => enterDigit(7)}>
+          7
+        </Button>
+        <Button area="oito" onClick={() => enterDigit(8)}>
+          8
+        </Button>
+        <Button area="nove" onClick={() => enterDigit(9)}>
+          9
+        </Button>
+        <Button
+          area="vezes"
+          color="#E87F18"
+          fontColor="white"
+          disabled={lastOperation === "*" && !state.acumulatedDigits.length}
+          onClick={() => enterOperation("*")}
+        >
+          *
+        </Button>
+
+        <Button area="zero" onClick={() => enterDigit(0)}>
+          0
+        </Button>
+        <Button
+          area="igual"
+          fontColor="white"
+          color="#E87F18"
+          onClick={() => enterResult()}
+        >
+          =
+        </Button>
+
         {error === true ? <h3>ERROR</h3> : <></>}
-      </div>
+      </CalculatorContainer>
     </>
   );
 }
+
+const isNumber = (n) => !isNaN(parseInt(n));
+
+const CalculatorContainer = styled.div`
+  display: grid;
+  max-width: 480px;
+  grid-template-areas:
+    "display display display display"
+    "clear clear clear dividir"
+    "um dois tres mais"
+    "quatro cinco seis menos"
+    "sete oito nove vezes"
+    "zero zero igual igual";
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  grid-gap: 8px;
+  padding: 16px;
+  height: 300px;
+  border: 1px solid;
+`;
+
+const DisplayBox = styled.div`
+  grid-area: display;
+  padding: 16px;
+  margin: 8px;
+  background-color: #e4f1ff;
+  border: 1px solid;
+  border-radius: 16px;
+  border-size: border-box;
+  max-width: 100%;
+  height: 20px;
+  align-items: center;
+  display: flex;
+`;
+
+const Button = styled.button`
+  background-color: ${({ color }) => color};
+  color: ${({ fontColor }) => fontColor};
+  grid-area: ${({ area }) => area};
+  font-size: 18px;
+  justify-content: center;
+  border: 1px solid;
+  padding: 8px;
+  max-width: 100%;
+`;
