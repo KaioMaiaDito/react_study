@@ -1,9 +1,14 @@
-import { useReducer, useState } from "react";
+import { useReducer, useState, useRef } from "react";
 
 //Usar useRef na hora de digitar o conteúdo do ToDo para não ficar consumindo memória com o onChange
+//Transformar o ToDoListArray em um Objeto de Objetos
+//Mudar os comandos do dispatch para o tipo {type: ... payload: {}}
+//Alterar a ordenação usando o sort e o orderValue.
 
 let IDNUMBER = 3;
 export default function ToDo() {
+  const editRef = useRef("");
+
   const toDoListArray = [
     {
       id: 0,
@@ -263,17 +268,14 @@ export default function ToDo() {
           editToDo={editToDo}
           saveEditToDo={saveEditToDo}
           cancelEditToDo={cancelEditToDo}
-          onChange={(value) => {
-            setTextToDo(value);
-          }}
+          editRef={editRef}
           value={textToDo}
         />
         {state.actualCommand === "AddToDoBlank" && (
           <AddedToDoItem
-            onChange={(value) => {
-              setTextToDo(value);
+            onChange={() => {
+              setTextToDo(editRef.current);
             }}
-            value={textToDo}
             save={saveToDo}
             cancel={cancelNewToDo}
           />
@@ -286,15 +288,13 @@ export default function ToDo() {
   );
 }
 
-const AddedToDoItem = ({ save, cancel, onChange, value }) => {
-  const changeText = (event) => {
-    onChange(event.target.value);
-  };
+const AddedToDoItem = ({ save, cancel }) => {
+  const addRef = useRef("");
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        save(value);
+        save(addRef.current);
       }}
       style={{ margin: "8px", border: "1px solid", padding: "8px" }}
     >
@@ -302,9 +302,8 @@ const AddedToDoItem = ({ save, cancel, onChange, value }) => {
         <input
           type="text"
           name="toDoText"
-          value={value}
+          ref={addRef}
           placeholder="Insira seu texto aqui..."
-          onChange={changeText}
         />
       </label>
       <button type="submit">SAVE</button>
@@ -322,13 +321,10 @@ const ToDoItem = ({
   removeToDo,
   editToDo,
   saveEditToDo,
-  onChange,
   cancelEditToDo,
   value,
+  editRef,
 }) => {
-  const changeText = (event) => {
-    onChange(event.target.value);
-  };
   return toDoList.map((element) => {
     return element.id !== null ? (
       <div
@@ -345,10 +341,9 @@ const ToDoItem = ({
         {element.editting ? (
           <input
             type="text"
+            ref={editRef}
             name="toDoText"
-            value={value}
             placeholder="Insira seu texto aqui..."
-            onChange={changeText}
           />
         ) : (
           <p>{element.content}</p>
