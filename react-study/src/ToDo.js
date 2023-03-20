@@ -1,19 +1,15 @@
-import { useReducer, useState, useRef } from "react";
+import { useReducer, useState } from "react";
 
-//Usar useRef na hora de digitar o conteúdo do ToDo para não ficar consumindo memória com o onChange
 //Transformar o ToDoListArray em um Objeto de Objetos
 //Mudar os comandos do dispatch para o tipo {type: ... payload: {}}
 //Alterar a ordenação usando o sort e o orderValue.
 
 let IDNUMBER = 3;
 export default function ToDo() {
-  const editRef = useRef("");
-
   const toDoListArray = [
     {
       id: 0,
       content: "Teste 1",
-      orderValue: 0,
       delete: false,
       checked: false,
       editting: false,
@@ -21,7 +17,6 @@ export default function ToDo() {
     {
       id: 1,
       content: "Teste 2",
-      orderValue: 1,
       delete: false,
       checked: true,
       editting: false,
@@ -29,111 +24,114 @@ export default function ToDo() {
     {
       id: 2,
       content: "Teste 3",
-      orderValue: 2,
       delete: false,
       checked: false,
       editting: false,
     },
   ];
+  const toDoListObject = {
+    1: {
+      content: "Teste 1",
+      delete: false,
+      checked: false,
+      editting: false,
+    },
+
+    2: {
+      content: "Teste 2",
+      delete: false,
+      checked: true,
+      editting: false,
+    },
+    3: {
+      content: "Teste 3",
+      delete: false,
+      checked: false,
+      editting: false,
+    },
+  };
 
   const toDoItemInitial = {
     id: null,
     content: "",
-    orderValue: null,
     delete: false,
     checked: false,
     editting: false,
   };
 
   const reducerElement = {
-    actualCommand: "",
-    id: null,
-    text: "",
     toDoList: toDoListArray,
   };
 
-  const reducer = (state, action) => {
-    if (action.toDoList !== undefined) {
-      const index = state.toDoList.findIndex(
-        (element) => element.id === action.id
-      );
-      switch (action.actualCommand) {
-        case "MoveUp": {
+  const reducer = (state, condition) => {
+    const { type, payload } = condition;
+    if (state.toDoList !== undefined) {
+      const index =
+        payload !== undefined
+          ? state.toDoList.findIndex((element) => element.id === payload.id)
+          : null;
+      switch (type) {
+        case "toDo/moveUp": {
           if (index === 0) {
             return { ...state };
           }
           const actualToDoList = [...state.toDoList];
-          const actualToDoItem = actualToDoList[index];
-          const beforeToDoItem = actualToDoList[index - 1];
-          actualToDoList.splice(index, 1, {
-            ...beforeToDoItem,
-            orderValue: actualToDoList[index].orderValue,
-          });
-          actualToDoList.splice(index - 1, 1, {
-            ...actualToDoItem,
-            orderValue: actualToDoList[index - 1].orderValue,
-          });
+          actualToDoList.splice(
+            index - 1,
+            0,
+            ...actualToDoList.splice(index, 1)
+          );
           return {
             ...state,
-            actualCommand: "",
             id: null,
             toDoList: actualToDoList,
           };
         }
-        case "MoveDown": {
+        case "toDo/moveDown": {
           if (index === state.toDoList.length - 1) {
             return { ...state };
           }
           const actualToDoList = [...state.toDoList];
-          const actualToDoItem = actualToDoList[index];
-          const afterToDoItem = actualToDoList[index + 1];
-          actualToDoList.splice(index, 1, {
-            ...afterToDoItem,
-            orderValue: actualToDoList[index].orderValue,
-          });
-          actualToDoList.splice(index + 1, 1, {
-            ...actualToDoItem,
-            orderValue: actualToDoList[index + 1].orderValue,
-          });
+          actualToDoList.splice(
+            index + 1,
+            0,
+            ...actualToDoList.splice(index, 1)
+          );
           return {
             ...state,
-            actualCommand: "",
             id: null,
             toDoList: actualToDoList,
           };
         }
-        case "Check": {
+        case "toDo/check": {
           const actualToDoList = [...state.toDoList];
-          const checkedToDoItem = actualToDoList[index];
           actualToDoList.splice(index, 1, {
-            ...checkedToDoItem,
+            ...actualToDoList[index],
             checked: !actualToDoList[index].checked,
           });
           return {
             ...state,
-            actualCommand: "",
             toDoList: actualToDoList,
           };
         }
-        case "AddToDoBlank": {
+        case "toDo/addNew": {
           const actualToDoList = [...state.toDoList];
           const newToDoItem = actualToDoList.concat(toDoItemInitial);
           return {
             ...state,
-            actualCommand: "AddToDoBlank",
+            type: "toDo/addedNew",
             toDoList: newToDoItem,
           };
         }
-        case "CancelNew": {
+        case "toDo/cancelNew": {
           const actualToDoList = [...state.toDoList];
           actualToDoList.pop();
           return {
             ...state,
-            actualCommand: "",
             toDoList: actualToDoList,
           };
         }
-        case "CancelEdit": {
+        case "toDo/cancelEdit": {
           const actualToDoList = [...state.toDoList];
           actualToDoList[index] = { ...actualToDoList[index], editting: false };
           return {
@@ -141,12 +139,11 @@ export default function ToDo() {
             toDoList: actualToDoList,
           };
         }
-        case "SaveToDo": {
+        case "toDo/saveNew": {
           const actualToDoList = [...state.toDoList];
           actualToDoList[actualToDoList.length - 1] = {
             id: IDNUMBER,
-            content: action.text,
-            orderValue: actualToDoList.length - 1,
+            content: payload.text,
             delete: false,
             checked: false,
             editting: false,
@@ -154,37 +151,33 @@ export default function ToDo() {
           IDNUMBER++; //Mudar depois!!
           return {
             ...state,
-            actualCommand: "",
             text: "",
             toDoList: actualToDoList,
           };
         }
-        case "RemoveToDoItem": {
+        case "toDo/removeItem": {
           const actualToDoList = [...state.toDoList];
           actualToDoList.splice(index, 1);
           return {
             ...state,
-            actualCommand: "",
             id: null,
             toDoList: actualToDoList,
           };
         }
-        case "EditToDo": {
+        case "toDo/edit": {
           const actualToDoList = [...state.toDoList];
           actualToDoList[index] = { ...actualToDoList[index], editting: true };
           return {
             ...state,
-            actualCommand: "",
             text: "",
             toDoList: actualToDoList,
           };
         }
-        case "SaveEditToDo": {
+        case "toDo/saveEdit": {
           const actualToDoList = [...state.toDoList];
           actualToDoList[index] = {
-            id: action.toDoList[index].id,
-            content: action.text,
-            orderValue: state.toDoList[index].orderValue,
+            //id: action.toDoList[index].id,
+            content: payload.text,
             delete: false,
             checked: false,
             editting: false,
@@ -192,7 +185,6 @@ export default function ToDo() {
 
           return {
             ...state,
-            actualCommand: "",
             text: "",
             toDoList: actualToDoList,
           };
@@ -209,53 +201,55 @@ export default function ToDo() {
 
   const moveToDo = (direction, id) => {
     if (direction === "UP") {
-      dispatch({ ...state, id: id, actualCommand: "MoveUp" });
+      dispatch({ type: "toDo/moveUp", payload: { id: id } });
     }
     if (direction === "DOWN") {
-      dispatch({ ...state, id: id, actualCommand: "MoveDown" });
+      dispatch({ type: "toDo/moveDown", payload: { id: id } });
     }
     return;
   };
   const checkToDo = (id) => {
-    dispatch({ ...state, id: id, actualCommand: "Check" });
+    dispatch({ type: "toDo/check", payload: { id: id } });
     return;
   };
+
+  const addToDo = () => {
+    dispatch({ type: "toDo/addNew" });
+    return;
+  };
+  const saveToDo = (text) => {
+    dispatch({ type: "toDo/saveNew", payload: { text: text } });
+    setTextToDo("");
+    return;
+  };
+  const cancelNewToDo = () => {
+    dispatch({ type: "toDo/cancelNew" });
+    setTextToDo("");
+    return;
+  };
+
   const editToDo = (id) => {
     const index = state.toDoList.findIndex((element) => element.id === id);
     setTextToDo(String(state.toDoList[index].content));
 
-    dispatch({ ...state, id: id, actualCommand: "EditToDo" });
+    dispatch({ type: "toDo/saveEdit", payload: { id: id } });
     return;
   };
-  const addToDo = () => {
-    dispatch({ ...state, actualCommand: "AddToDoBlank" });
-    return;
-  };
-  const cancelNewToDo = () => {
-    dispatch({ ...state, actualCommand: "CancelNew" });
+  const saveEditToDo = (id, text) => {
+    dispatch({ type: "toDo/saveEdit", payload: { id: id, text: text } });
     setTextToDo("");
     return;
   };
   const cancelEditToDo = (id) => {
-    dispatch({ ...state, id: id, actualCommand: "CancelEdit" });
+    dispatch({ type: "toDo/cancelEdit", payload: { id: id } });
     return;
   };
+
   const removeToDo = (id) => {
-    dispatch({ ...state, id: id, actualCommand: "RemoveToDoItem" });
+    dispatch({ type: "toDo/removeItem", payload: { id: id } });
     return;
   };
-  const saveToDo = (text) => {
-    dispatch({ ...state, text: text, actualCommand: "SaveToDo" });
-    setTextToDo("");
-    return;
-  };
-  const saveEditToDo = (id, text) => {
-    dispatch({ ...state, id: id, text: text, actualCommand: "SaveEditToDo" });
-    setTextToDo("");
-
-    return;
-  };
-
+  console.log(state);
   return (
     <>
       <div style={{ margin: "8px", border: "1px solid", padding: "8px" }}>
@@ -268,19 +262,22 @@ export default function ToDo() {
           editToDo={editToDo}
           saveEditToDo={saveEditToDo}
           cancelEditToDo={cancelEditToDo}
-          editRef={editRef}
+          onChange={(value) => {
+            setTextToDo(value);
+          }}
           value={textToDo}
         />
-        {state.actualCommand === "AddToDoBlank" && (
+        {state.actualCommand === "toDo/addedNew" && (
           <AddedToDoItem
-            onChange={() => {
-              setTextToDo(editRef.current);
+            onChange={(value) => {
+              setTextToDo(value);
             }}
+            value={textToDo}
             save={saveToDo}
             cancel={cancelNewToDo}
           />
         )}
-        {state.actualCommand !== "AddToDoBlank" && (
+        {state.actualCommand !== "toDo/addedNew" && (
           <button onClick={() => addToDo()}>+</button>
         )}
       </div>
@@ -288,13 +285,15 @@ export default function ToDo() {
   );
 }
 
-const AddedToDoItem = ({ save, cancel }) => {
-  const addRef = useRef("");
+const AddedToDoItem = ({ save, cancel, onChange, value }) => {
+  const changeText = (event) => {
+    onChange(event.target.value);
+  };
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        save(addRef.current);
+        save(value);
       }}
       style={{ margin: "8px", border: "1px solid", padding: "8px" }}
     >
@@ -302,8 +301,9 @@ const AddedToDoItem = ({ save, cancel }) => {
         <input
           type="text"
           name="toDoText"
-          ref={addRef}
+          value={value}
           placeholder="Insira seu texto aqui..."
+          onChange={changeText}
         />
       </label>
       <button type="submit">SAVE</button>
@@ -321,12 +321,15 @@ const ToDoItem = ({
   removeToDo,
   editToDo,
   saveEditToDo,
+  onChange,
   cancelEditToDo,
   value,
-  editRef,
 }) => {
+  const changeText = (event) => {
+    onChange(event.target.value);
+  };
   return toDoList.map((element) => {
-    return element.id !== null ? (
+    return element.content !== null ? (
       <div
         key={element.id}
         style={{ margin: "8px", border: "1px solid", padding: "8px" }}
@@ -341,9 +344,10 @@ const ToDoItem = ({
         {element.editting ? (
           <input
             type="text"
-            ref={editRef}
             name="toDoText"
+            value={value}
             placeholder="Insira seu texto aqui..."
+            onChange={changeText}
           />
         ) : (
           <p>{element.content}</p>
