@@ -29,27 +29,6 @@ export default function ToDo() {
       editting: false,
     },
   ];
-  const toDoListObject = {
-    1: {
-      content: "Teste 1",
-      delete: false,
-      checked: false,
-      editting: false,
-    },
-
-    2: {
-      content: "Teste 2",
-      delete: false,
-      checked: true,
-      editting: false,
-    },
-    3: {
-      content: "Teste 3",
-      delete: false,
-      checked: false,
-      editting: false,
-    },
-  };
 
   const toDoItemInitial = {
     id: null,
