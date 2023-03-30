@@ -189,16 +189,13 @@ export default function ToDoObject() {
 
   return (
     <>
-      <div style={{ margin: "8px", border: "1px solid", padding: "8px" }}>
+      <ToDoContainer>
         {Object.values(state)
           .sort((a, b) => a.orderValue - b.orderValue)
           .map((element) => {
             return !element.editting ? (
-              <div
-                key={element.id}
-                style={{ margin: "8px", border: "1px solid", padding: "8px" }}
-              >
-                <ToDoItemPosControlStyled
+              <ToDoItemContainer key={element.id}>
+                <ToDoItemPosControl
                   id={element.id}
                   move={moveItem}
                   check={checkItem}
@@ -209,18 +206,15 @@ export default function ToDoObject() {
                   content={element.content}
                   order={element.orderValue}
                 />
-                <ToDoItemControl
+                <ToDoItemControlStyled
                   id={element.id}
                   remove={removeItem}
                   edit={editItem}
                   disableEdit={disableEdit}
                 />
-              </div>
+              </ToDoItemContainer>
             ) : (
-              <div
-                key={element.id}
-                style={{ margin: "8px", border: "1px solid", padding: "8px" }}
-              >
+              <ToDoItemContainer key={element.id}>
                 <ToDoItemChangeInput
                   order={element.orderValue}
                   text={textToDo}
@@ -232,7 +226,7 @@ export default function ToDoObject() {
                   cancel={cancelEdit}
                   disableEdit={disableEdit}
                 />
-              </div>
+              </ToDoItemContainer>
             );
           })}
         {!newItemAdded ? (
@@ -243,47 +237,54 @@ export default function ToDoObject() {
             <ToDoItemInputControl save={saveNew} cancel={cancelNew} />
           </>
         )}
-      </div>
+      </ToDoContainer>
     </>
   );
 }
 
 const ToDoItemContent = ({ content, order }) => {
-  return <p>{order + " " + content}</p>;
+  return (
+    <ToDoItemContentStyled>
+      <OrderNumber>{order}</OrderNumber>
+      <ToDoText>{" " + content}</ToDoText>
+    </ToDoItemContentStyled>
+  );
 };
 
 const ToDoItemPosControl = ({ id, move, check, checkBox, disableMove }) => {
   return (
-    <>
+    <ToDoItemPosControlStyled>
       <Button
         color="blue"
         fontColor="white"
         onClick={() => move("UP", id)}
         disabled={disableMove}
+        display="block"
       >
         ^
       </Button>
-      <input type="checkbox" onChange={() => check(id)} checked={checkBox} />
+      <Input type="checkbox" onChange={() => check(id)} checked={checkBox} />
       <Button
         color="blue"
         fontColor="white"
         onClick={() => move("DOWN", id)}
         disabled={disableMove}
+        display="block"
       >
         v
       </Button>
-    </>
+    </ToDoItemPosControlStyled>
   );
 };
 
-const ToDoItemControl = ({ id, remove, edit, disableEdit }) => {
+const ToDoItemControl = ({ id, remove, edit, disableEdit, className }) => {
   return (
-    <>
+    <div className={className}>
       <Button onClick={() => edit(id)} disabled={disableEdit}>
         Edit
       </Button>
       <Button onClick={() => remove(id)}>Delete</Button>
-    </>
+    </div>
   );
 };
 
@@ -298,9 +299,9 @@ const ToDoItemAdd = ({ newItem, disableEdit }) => {
 };
 
 const ToDoItemChangeInput = ({ order, text, handleOnChange }) => {
-  return (
-    <>
-      {order ? <p>{order}</p> : null}
+  return order ? (
+    <ToDoItemContentStyled>
+      <OrderNumber>{order}</OrderNumber>
       <input
         type="text"
         name="toDoText"
@@ -308,24 +309,64 @@ const ToDoItemChangeInput = ({ order, text, handleOnChange }) => {
         onChange={(event) => handleOnChange(event.target.value)}
         placeholder="Insira seu texto aqui..."
       />
-    </>
+    </ToDoItemContentStyled>
+  ) : (
+    <InputNew
+      type="text"
+      name="toDoText"
+      value={text}
+      onChange={(event) => handleOnChange(event.target.value)}
+      placeholder="Insira seu texto aqui..."
+    />
   );
 };
 
 const ToDoItemInputControl = ({ id, save, cancel }) => {
   return (
-    <>
+    <ToDoNewItemControlStyled>
       <Button color="green" fontColor="white" onClick={() => save(id)}>
         Save
       </Button>
       <Button color="gray" fontColor="black" onClick={() => cancel(id)}>
         Cancel
       </Button>
-    </>
+    </ToDoNewItemControlStyled>
   );
 };
 
+const ToDoContainer = styled.div`
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: column;
+  border: 1px solid;
+  padding: 16px;
+`;
+
+const ToDoItemContainer = styled.div`
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid;
+  margin: 8px;
+  padding: 8px;
+  max-width: 100%;
+`;
+
+const ToDoItemContentStyled = styled.div`
+  margin: 20px;
+  width: 80vw;
+  border: 1px solid;
+  border-radius: 16px;
+  padding: 8px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  overflow-wrap: anywhere;
+  align-items: center;
+`;
+
 const Button = styled.button`
+  display: ${({ display }) => display};
   background-color: ${({ color }) => color};
   color: ${({ fontColor }) => fontColor};
   font-size: 18px;
@@ -336,6 +377,40 @@ const Button = styled.button`
   max-width: 100%;
 `;
 
-const ToDoItemPosControlStyled = styled(ToDoItemPosControl)`
+const OrderNumber = styled.p`
+  font-size: 32px;
+  font-weight: bolder;
+  margin-right: 12px;
+`;
+
+const ToDoText = styled.p`
+  font-size: 20px;
+`;
+
+const Input = styled.input`
+  width: 16px;
+  margin: 5px;
+`;
+
+const ToDoItemPosControlStyled = styled.div`
   display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ToDoItemControlStyled = styled(ToDoItemControl)`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+`;
+
+const InputNew = styled.input`
+  width: 91vw;
+  padding: 8px;
+`;
+
+const ToDoNewItemControlStyled = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 `;
