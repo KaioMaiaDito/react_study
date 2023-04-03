@@ -5,8 +5,9 @@ import "./styles.css";
 // import Counter from "./Counter";
 // import Calculator from "./Calculator";
 // import ToDo from "./ToDo";
-import ToDoObject from "./ToDoObject";
-//import PokedexApp from "./Pokedex";
+// import ToDoObject from "./ToDoObject";
+// import PokedexApp from "./Pokedex";
+import ReduxPokedexApp from "./Pokedex/ReduxPokedex";
 
 const root = createRoot(document.getElementById("root"));
 root.render(
@@ -14,7 +15,8 @@ root.render(
     {/* {<Counter />} */}
     {/* {<Calculator />} */}
     {/* {<ToDo />} */}
-    {<ToDoObject />}
+    {/* {<ToDoObject />} */}
     {/* {<PokedexApp />} */}
+    <ReduxPokedexApp />
   </StrictMode>
 );
