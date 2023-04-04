@@ -27,7 +27,7 @@ function CardPokemonComponent({ name, id, image, types, isFetching, isError }) {
     : PokemonLink;
   return (
     <>
-      <CardDiv>
+      <CardWrapper>
         <h2>{id ?? "??"}</h2>
         <PokemonImage
           src={isFetching ? pokeball : isError ? open_pokeball : image}
@@ -37,16 +37,16 @@ function CardPokemonComponent({ name, id, image, types, isFetching, isError }) {
         <LinkPokemon to={"/pokedex/pokemon/".concat(id)}>
           {isFetching ? "Loading..." : isError ? "Error" : name}
         </LinkPokemon>
-        <TypeDiv>
+        <TypeWrapper>
           {types &&
             types.map(({ type }) => <h3 key={type.name}>{type.name}</h3>)}
-        </TypeDiv>
-      </CardDiv>
+        </TypeWrapper>
+      </CardWrapper>
     </>
   );
 }
 
-const CardDiv = styled.div`
+const CardWrapper = styled.div`
   margin: 8px;
   border: 1px solid;
   padding: 8px;
@@ -58,7 +58,7 @@ const CardDiv = styled.div`
   justify-content: space-between;
 `;
 
-const TypeDiv = styled.div`
+const TypeWrapper = styled.div`
   border-left: 1px solid;
     padding: 16px;
     margin: 8px;

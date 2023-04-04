@@ -37,7 +37,7 @@ export function Pokedex() {
         onChange={changePokemonSearch}
       />
       <button>SEARCH</button>
-      <PokedexDiv>
+      <PokedexWrapper>
         {pokedexData
           .filter((el) =>
             el.name.toLowerCase().includes(pokemonForSearch.toLowerCase())
@@ -46,12 +46,12 @@ export function Pokedex() {
             return <CardPokemonContainer key={element.id} id={element.id} />;
           })
           .sort((a, b) => a.id - b.id)}
-      </PokedexDiv>
+      </PokedexWrapper>
     </>
   );
 }
 
-const PokedexDiv = styled.div`
+const PokedexWrapper = styled.div`
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
