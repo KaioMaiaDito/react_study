@@ -1,17 +1,18 @@
 import { Link } from "react-router-dom";
 
 import {
-  useGetPokemonByNameQuery,
+  useGetPokemonByIdQuery,
   useGetPokemonEvolutionChainQuery,
   useGetPokemonSpeciesQuery,
 } from "../api.js";
 
 import styled from "styled-components";
+import open_pokeball from "./assets/open_pokeball.png";
+import pokeball from "./assets/pokeball.gif";
 
 function PokemonEvolutionsContainer({ id }) {
   const {
     data: pokemonSpecies,
-    isLoading: isLoadingSpecies,
     isError: isErrorSpecies,
     isFetching: isFetchingSpecies,
     isSuccess: isSuccessSpecies,
@@ -44,9 +45,8 @@ function PokemonEvolutionsContainer({ id }) {
     }, []);
   }
 
-  if (isLoadingSpecies) return <h1>Loading</h1>;
+  if (isFetchingSpecies) return <h1>Loading</h1>;
   if (isErrorSpecies) return <h1>Error</h1>;
-  if (isFetchingSpecies) return <></>;
 
   const evolutionNames =
     pokemonEvolChain !== undefined
@@ -54,92 +54,87 @@ function PokemonEvolutionsContainer({ id }) {
       : [];
 
   const idFromSpecies =
-    pokemonSpecies.evolves_from_species !== null
-      ? pokemonSpecies.evolves_from_species.url.split("/")
+    pokemonSpecies?.evolves_from_species !== null
+      ? pokemonSpecies?.evolves_from_species.url.split("/")[6]
       : null;
 
   return (
-    <EvolutionsDiv>
-      <EvolutionDiv>
-      <h1>Evoluiu de:</h1>
-      {pokemonSpecies.evolves_from_species !== null &&
-      idFromSpecies[6] <= 151 ? (
-        <PokemonEvolutionsComponent
-          id={pokemonSpecies.evolves_from_species.name}
-          key={"pokeEvolutionID".concat(
-            pokemonSpecies.evolves_from_species.name
-          )}
-        />
-      ) : (
-        <h2>Não possui Evolução</h2>
-      )}
-      </EvolutionDiv>
-      <EvolutionDiv>
-      <h1>Evolui para:</h1>
-      {pokemonEvolChain?.chain.evolves_to.length !== 0 &&
-      evolutionNames.length !== 0 ? (
-        evolutionNames.map((element) => (
-          <PokemonEvolutionsComponent
-            id={element}
-            key={"pokeEvolutionID".concat(element)}
-          />
-        ))
-      ) : (
-        <h2>Não possui Evolução</h2>
-      )}
-      </EvolutionDiv>
-    </EvolutionsDiv>
+    <EvolutionsWrapper>
+      <EvolutionWrapper>
+        <h1>Evoluiu de:</h1>
+        {pokemonSpecies?.evolves_from_species !== null &&
+        idFromSpecies <= 151 ? (
+          <PokemonEvolutionsComponent id={idFromSpecies} />
+        ) : (
+          <h2>Não possui Evolução</h2>
+        )}
+      </EvolutionWrapper>
+      <EvolutionWrapper>
+        <h1>Evolui para:</h1>
+        {pokemonEvolChain?.chain.evolves_to.length !== 0 &&
+        evolutionNames.length !== 0 ? (
+          evolutionNames.map((element) => (
+            <PokemonEvolutionsComponent
+              id={element}
+              key={"pokeEvolutionID".concat(element)}
+            />
+          ))
+        ) : (
+          <h2>Não possui Evolução</h2>
+        )}
+      </EvolutionWrapper>
+    </EvolutionsWrapper>
   );
 }
 
-const EvolutionDiv = styled.div`
-display: flex;
-flex-direction: column;
-align-items: baseline;`
+const EvolutionWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+`;
 
-const EvolutionsDiv = styled.div`
-display: flex;
-justify-content: space-around;
-flex-direction: row;`
+const EvolutionsWrapper = styled.div`
+  display: flex;
+  justify-content: space-around;
+  flex-direction: row;
+`;
 
 function PokemonEvolutionsComponent({ id }) {
-  const {
-    data: pokemon,
-    isLoading,
-    isError,
-    isFetching,
-  } = useGetPokemonByNameQuery(id);
+  const { data: pokemon, isError, isFetching } = useGetPokemonByIdQuery(id);
 
-  if (isLoading) return <h1>Loading</h1>;
-  if (isError) return <h1>Error</h1>;
-  if (isFetching) return <></>;
-
-  return pokemon.id <= 151 ? (
-    <CardDiv
-      key={"PokeEvolution".concat(pokemon.id)}  
-    >
-      <h2>{pokemon.id}</h2>
-      <PokemonImage src={pokemon.sprites.front_default} alt="imagem do pokemon" />
+  return pokemon?.id <= 151 ? (
+    <CardWrapper key={"PokeEvolution".concat(pokemon.id)}>
+      <h2>{isFetching ? "??" : isError ? "??" : pokemon.id}</h2>
+      <PokemonImage
+        src={
+          isFetching
+            ? pokeball
+            : isError
+            ? open_pokeball
+            : pokemon.sprites.front_default
+        }
+        alt="Imagem do pokemon"
+      />
       <PokemonLink to={"/pokedex/pokemon/".concat(pokemon.id)}>
-        {pokemon.name}
+        {isFetching ? "Loading..." : isError ? "Error" : pokemon.name}
       </PokemonLink>
-    </CardDiv>
+    </CardWrapper>
   ) : (
     <></>
   );
 }
 
-const CardDiv = styled.div`
-margin: 8px;
-border: 1px solid;
-padding: 8px;
-display: flex;
-flex-direction: row;
--webkit-box-align: center;
-align-items: center;
-width: 27em;
--webkit-box-pack: justify;
-justify-content: space-evenly;
+const CardWrapper = styled.div`
+  margin: 8px;
+  border: 1px solid;
+  padding: 8px;
+  display: flex;
+  flex-direction: row;
+  -webkit-box-align: center;
+  align-items: center;
+  width: 27em;
+  -webkit-box-pack: justify;
+  justify-content: space-evenly;
 `;
 
 const PokemonImage = styled.img`
