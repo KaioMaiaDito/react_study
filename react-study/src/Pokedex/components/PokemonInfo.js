@@ -3,6 +3,9 @@ import { useGetPokemonByNameQuery } from "../api.js";
 
 import { PokemonEvolutionsContainer } from "./PokemonEvolution.js";
 
+import styled from "styled-components";
+
+
 function PokemonInfoContainer() {
   const linkParams = useParams();
   const pokemonId = linkParams.id;
@@ -35,26 +38,64 @@ function PokemonInfoContainer() {
 function PokemonInfoComponent({ name, id, image, types, infos }) {
   return (
     <>
-      <div
+      <PokemonInfoDiv
         key={id}
-        style={{
-          margin: "8px",
-          border: "1px solid",
-          padding: "8px",
-        }}
       >
-        <img src={image} alt="imagem do pokemon" />
         <h2>{id}</h2>
-        <h3>{name}</h3>
-        {types.map(({ type }) => (
-          <h3 key={type.name}>{type.name}</h3>
-        ))}
-        <h3>{"Altura: ".concat(infos.height).concat("dm")}</h3>
-        <h3>{"Peso: ".concat(infos.weight).concat("hg")}</h3>
-        <h3>{"Habilidade: ".concat(infos.abilities[0].ability.name)}</h3>
-      </div>
+        <PokemonImage src={image} alt="imagem do pokemon" />
+        <PokemonName>{name}</PokemonName>
+        <Divider/>
+        <InternPokeInfoDiv>
+          {types.map(({ type }) => (
+            <h3 key={type.name}>{type.name}</h3>
+          ))}
+        </InternPokeInfoDiv>
+        <Divider/>
+        <InternPokeInfoDiv>
+          <h3>{"Altura: ".concat(infos.height).concat("dm")}</h3>
+          <h3>{"Peso: ".concat(infos.weight).concat("hg")}</h3>
+          <h3>{"Habilidade: ".concat(infos.abilities[0].ability.name)}</h3>
+        </InternPokeInfoDiv>
+      </PokemonInfoDiv>
     </>
   );
 }
+
+const PokemonImage = styled.img`
+  border: 1px solid;
+  margin: 8px;
+  width: 120px;
+`;
+
+const PokemonInfoDiv = styled.div`
+margin: 8px;
+border: 1px solid;
+padding: 0px 16px;
+display: flex;
+flex-direction: row;
+align-items: center;
+justify-content: space-evenly;
+`
+
+const InternPokeInfoDiv =  styled.div`
+padding: 8px;
+width: 28%;
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+`
+const Divider = styled.div`
+display: inline-block;
+  width: 1px;
+  background-color: black;
+  margin: 0 10px;
+  height: 14em;
+
+`
+const PokemonName = styled.h3`
+    font-size: large;
+    padding: 24px;
+`
 
 export { PokemonInfoComponent, PokemonInfoContainer };

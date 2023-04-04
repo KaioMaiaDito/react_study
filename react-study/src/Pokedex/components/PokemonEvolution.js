@@ -6,6 +6,8 @@ import {
   useGetPokemonSpeciesQuery,
 } from "../api.js";
 
+import styled from "styled-components";
+
 function PokemonEvolutionsContainer({ id }) {
   const {
     data: pokemonSpecies,
@@ -57,7 +59,8 @@ function PokemonEvolutionsContainer({ id }) {
       : null;
 
   return (
-    <>
+    <EvolutionsDiv>
+      <EvolutionDiv>
       <h1>Evoluiu de:</h1>
       {pokemonSpecies.evolves_from_species !== null &&
       idFromSpecies[6] <= 151 ? (
@@ -70,6 +73,8 @@ function PokemonEvolutionsContainer({ id }) {
       ) : (
         <h2>Não possui Evolução</h2>
       )}
+      </EvolutionDiv>
+      <EvolutionDiv>
       <h1>Evolui para:</h1>
       {pokemonEvolChain?.chain.evolves_to.length !== 0 &&
       evolutionNames.length !== 0 ? (
@@ -82,9 +87,20 @@ function PokemonEvolutionsContainer({ id }) {
       ) : (
         <h2>Não possui Evolução</h2>
       )}
-    </>
+      </EvolutionDiv>
+    </EvolutionsDiv>
   );
 }
+
+const EvolutionDiv = styled.div`
+display: flex;
+flex-direction: column;
+align-items: baseline;`
+
+const EvolutionsDiv = styled.div`
+display: flex;
+justify-content: space-around;
+flex-direction: row;`
 
 function PokemonEvolutionsComponent({ id }) {
   const {
@@ -99,23 +115,43 @@ function PokemonEvolutionsComponent({ id }) {
   if (isFetching) return <></>;
 
   return pokemon.id <= 151 ? (
-    <div
-      key={"PokeEvolution".concat(pokemon.id)}
-      style={{
-        margin: "8px",
-        border: "1px solid",
-        padding: "8px",
-      }}
+    <CardDiv
+      key={"PokeEvolution".concat(pokemon.id)}  
     >
-      <p>{id}</p>
-      <img src={pokemon.sprites.front_default} alt="imagem do pokemon" />
-      <Link to={"/pokedex/pokemon/".concat(pokemon.id)}>
-        {"ID#".concat(pokemon.id).concat(" ").concat(pokemon.name)}
-      </Link>
-    </div>
+      <h2>{pokemon.id}</h2>
+      <PokemonImage src={pokemon.sprites.front_default} alt="imagem do pokemon" />
+      <PokemonLink to={"/pokedex/pokemon/".concat(pokemon.id)}>
+        {pokemon.name}
+      </PokemonLink>
+    </CardDiv>
   ) : (
     <></>
   );
 }
+
+const CardDiv = styled.div`
+margin: 8px;
+border: 1px solid;
+padding: 8px;
+display: flex;
+flex-direction: row;
+-webkit-box-align: center;
+align-items: center;
+width: 27em;
+-webkit-box-pack: justify;
+justify-content: space-evenly;
+`;
+
+const PokemonImage = styled.img`
+  border: 1px solid;
+  margin: 8px;
+  width: 120px;
+`;
+
+const PokemonLink = styled(Link)`
+  font-size: large;
+  color: black;
+  text-decoration: none;
+`;
 
 export { PokemonEvolutionsComponent, PokemonEvolutionsContainer };
