@@ -1,86 +1,45 @@
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { useGetPokemonByUrlQuery } from "../api.js";
+import { useGetPokemonByIdQuery } from "../api.js";
 import open_pokeball from "./assets/open_pokeball.png";
 import pokeball from "./assets/pokeball.gif";
 
-function CardPokemonContainer({ url }) {
-  const {
-    data: pokemon,
-    isLoading,
-    isError,
-    isFetching,
-  } = useGetPokemonByUrlQuery(url);
+function CardPokemonContainer({ id }) {
+  const { data: pokemon, isError, isFetching } = useGetPokemonByIdQuery(id);
 
-  if (isLoading)
-    return (
-      <CardDiv>
-        <h2>??</h2>
-        <PokemonImage src={pokeball} alt="Imagem de loading pokemon" />
-
-        <PokemonLoading>Loading...</PokemonLoading>
-        <TypeDiv>
-          <PokemonTypeLoading>Loading...</PokemonTypeLoading>
-        </TypeDiv>
-      </CardDiv>
-    );
-  if (isError)
-    return (
-      <CardDiv>
-        <h2>??</h2>
-        <PokemonImage src={open_pokeball} alt="Imagem de ERROR pokemon" />
-
-        <PokemonLoading>ERROR</PokemonLoading>
-        <TypeDiv>
-          <PokemonTypeLoading>ERROR</PokemonTypeLoading>
-        </TypeDiv>
-      </CardDiv>
-    );
-  if (isFetching) return <></>;
-
-  return pokemon.name ? (
+  return (
     <CardPokemonComponent
-      name={pokemon.name}
-      image={pokemon.sprites.front_default}
-      types={pokemon.types}
-      id={pokemon.id}
-      key={pokemon.id}
+      name={pokemon?.name}
+      image={pokemon?.sprites.front_default}
+      types={pokemon?.types}
+      id={pokemon?.id}
+      isFetching={isFetching}
+      isError={isError}
     />
-  ) : null;
+  );
 }
 
-function CardPokemonComponent({ name, id, image, types }) {
+function CardPokemonComponent({ name, id, image, types, isFetching, isError }) {
+  const LinkPokemon = isFetching
+    ? PokemonLoading
+    : isError
+    ? PokemonLoading
+    : PokemonLink;
   return (
     <>
       <CardDiv>
-        <h2>{id}</h2>
-        <PokemonImage src={image} alt="imagem do pokemon" />
+        <h2>{id ?? "??"}</h2>
+        <PokemonImage
+          src={isFetching ? pokeball : isError ? open_pokeball : image}
+          alt="imagem do pokemon"
+        />
 
-        <PokemonLink to={"/pokedex/pokemon/".concat(id)}>{name}</PokemonLink>
+        <LinkPokemon to={"/pokedex/pokemon/".concat(id)}>
+          {isFetching ? "Loading..." : isError ? "Error" : name}
+        </LinkPokemon>
         <TypeDiv>
-          {types.map(({ type }) => (
-            <h3 key={type.name}>{type.name}</h3>
-          ))}
-        </TypeDiv>
-      </CardDiv>
-      <CardDiv>
-        <h2>??</h2>
-        <PokemonImage src={pokeball} alt="Imagem de loading pokemon" />
-
-        <PokemonLoading>Loading...</PokemonLoading>
-        <TypeDiv>
-          <h3>Loading...</h3>
-          <h3>Loading...</h3>
-        </TypeDiv>
-      </CardDiv>
-      <CardDiv>
-        <h2>XX</h2>
-        <PokemonImage src={open_pokeball} alt="Imagem de ERROR pokemon" />
-
-        <PokemonLoading>ERROR</PokemonLoading>
-        <TypeDiv>
-          <h3>ERROR</h3>
-          <h3>ERROR</h3>
+          {types &&
+            types.map(({ type }) => <h3 key={type.name}>{type.name}</h3>)}
         </TypeDiv>
       </CardDiv>
     </>
@@ -124,12 +83,6 @@ const PokemonLink = styled(Link)`
 
 const PokemonLoading = styled.p`
   font-size: large;
-  color: black;
-  text-decoration: none;
-`;
-
-const PokemonTypeLoading = styled.p`
-  font-size: medium;
   color: black;
   text-decoration: none;
 `;

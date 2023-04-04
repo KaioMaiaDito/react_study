@@ -6,32 +6,29 @@ export const pokemonApi = createApi({
   endpoints: (builder) => ({
     getPokedex: builder.query({
       query: () => `pokemon/?limit=151`,
-      transformResponse: (response, meta, arg) => response.results,
-      transformErrorResponse: (response, meta, arg) => response.status,
+      transformResponse: (response) =>
+        response.results.map(({ name, url }) => {
+          return { name: name, url: url, id: url.split("/")[6] };
+        }),
+      transformErrorResponse: (response) => response.status,
       queryTag: "pokedex",
     }),
-    getPokemonByName: builder.query({
+    getPokemonById: builder.query({
       query: (name) => `pokemon/${name}`,
-      transformResponse: (response, meta, arg) => response,
-      transformErrorResponse: (response, meta, arg) => response.status,
+      transformResponse: (response) => response,
+      transformErrorResponse: (response) => response.status,
       queryTag: "pokemon",
     }),
     getPokemonSpecies: builder.query({
       query: (pokemonId) => `pokemon-species/${pokemonId}`,
-      transformResponse: (response, meta, arg) => response,
-      transformErrorResponse: (response, meta, arg) => response.status,
+      transformResponse: (response) => response,
+      transformErrorResponse: (response) => response.status,
       queryTag: "pokemon",
     }),
     getPokemonEvolutionChain: builder.query({
       query: (id) => `evolution-chain/${id}`,
-      transformResponse: (response, meta, arg) => response,
-      transformErrorResponse: (response, meta, arg) => response.status,
-      queryTag: "pokemon",
-    }),
-    getPokemonByUrl: builder.query({
-      query: (url) => url,
-      transformResponse: (response, meta, arg) => response,
-      transformErrorResponse: (response, meta, arg) => response.status,
+      transformResponse: (response) => response,
+      transformErrorResponse: (response) => response.status,
       queryTag: "pokemon",
     }),
   }),
@@ -39,8 +36,7 @@ export const pokemonApi = createApi({
 
 export const {
   useGetPokedexQuery,
-  useGetPokemonByNameQuery,
+  useGetPokemonByIdQuery,
   useGetPokemonSpeciesQuery,
-  useGetPokemonByUrlQuery,
   useGetPokemonEvolutionChainQuery,
 } = pokemonApi;

@@ -1,10 +1,11 @@
 import { useParams } from "react-router-dom";
-import { useGetPokemonByNameQuery } from "../api.js";
+import { useGetPokemonByIdQuery } from "../api.js";
 
 import { PokemonEvolutionsContainer } from "./PokemonEvolution.js";
 
 import styled from "styled-components";
-
+import open_pokeball from "./assets/open_pokeball.png";
+import pokeball from "./assets/pokeball.gif";
 
 function PokemonInfoContainer() {
   const linkParams = useParams();
@@ -12,16 +13,14 @@ function PokemonInfoContainer() {
 
   const {
     data: pokemonInfo,
-    isLoading,
     isError,
     isFetching,
-  } = useGetPokemonByNameQuery(pokemonId);
+  } = useGetPokemonByIdQuery(pokemonId);
 
-  if (isLoading) return <h1>Loading</h1>;
+  if (isFetching) return <h1>Loading...</h1>;
   if (isError) return <h1>Error</h1>;
-  if (isFetching) return <></>;
 
-  return pokemonInfo.name ? (
+  return (
     <>
       <PokemonInfoComponent
         name={pokemonInfo.name}
@@ -30,33 +29,44 @@ function PokemonInfoContainer() {
         id={pokemonInfo.id}
         infos={pokemonInfo}
         key={"pokeInfoCompID".concat(pokemonInfo.id)}
+        isFetching={isFetching}
+        isError={isError}
       />
       <PokemonEvolutionsContainer id={pokemonInfo.id} />
     </>
-  ) : null;
+  );
 }
-function PokemonInfoComponent({ name, id, image, types, infos }) {
+function PokemonInfoComponent({
+  name,
+  id,
+  image,
+  types,
+  infos,
+  isFetching,
+  isError,
+}) {
   return (
     <>
-      <PokemonInfoDiv
-        key={id}
-      >
+      <PokemonInfoWrapper key={id}>
         <h2>{id}</h2>
-        <PokemonImage src={image} alt="imagem do pokemon" />
+        <PokemonImage
+          src={isFetching ? pokeball : isError ? open_pokeball : image}
+          alt="imagem do pokemon"
+        />
         <PokemonName>{name}</PokemonName>
-        <Divider/>
-        <InternPokeInfoDiv>
+        <Divider />
+        <InternPokeInfoWrapper>
           {types.map(({ type }) => (
             <h3 key={type.name}>{type.name}</h3>
           ))}
-        </InternPokeInfoDiv>
-        <Divider/>
-        <InternPokeInfoDiv>
+        </InternPokeInfoWrapper>
+        <Divider />
+        <InternPokeInfoWrapper>
           <h3>{"Altura: ".concat(infos.height).concat("dm")}</h3>
           <h3>{"Peso: ".concat(infos.weight).concat("hg")}</h3>
           <h3>{"Habilidade: ".concat(infos.abilities[0].ability.name)}</h3>
-        </InternPokeInfoDiv>
-      </PokemonInfoDiv>
+        </InternPokeInfoWrapper>
+      </PokemonInfoWrapper>
     </>
   );
 }
@@ -67,35 +77,34 @@ const PokemonImage = styled.img`
   width: 120px;
 `;
 
-const PokemonInfoDiv = styled.div`
-margin: 8px;
-border: 1px solid;
-padding: 0px 16px;
-display: flex;
-flex-direction: row;
-align-items: center;
-justify-content: space-evenly;
-`
+const PokemonInfoWrapper = styled.div`
+  margin: 8px;
+  border: 1px solid;
+  padding: 0px 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
+`;
 
-const InternPokeInfoDiv =  styled.div`
+const InternPokeInfoWrapper = styled.div`
 padding: 8px;
 width: 28%;
 display: flex;
 flex-direction: column;
 align-items: center;
 }
-`
+`;
 const Divider = styled.div`
-display: inline-block;
+  display: inline-block;
   width: 1px;
   background-color: black;
   margin: 0 10px;
   height: 14em;
-
-`
+`;
 const PokemonName = styled.h3`
-    font-size: large;
-    padding: 24px;
-`
+  font-size: large;
+  padding: 24px;
+`;
 
 export { PokemonInfoComponent, PokemonInfoContainer };
