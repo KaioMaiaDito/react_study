@@ -2,6 +2,7 @@ import { Provider } from "react-redux";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { Pokedex } from "./components/Pokedex.js";
 import { PokemonInfoContainer } from "./components/PokemonInfo.js";
+import { RandomPokemon } from "./components/RandomPokemon.js";
 import store from "./store.js";
 
 function NavBar() {
@@ -10,6 +11,9 @@ function NavBar() {
       <ul>
         <li>
           <Link to="/pokedex">Pokedex</Link>
+        </li>
+        <li>
+          <Link to="/random-pokemon">Surprise</Link>
         </li>
       </ul>
     </nav>
@@ -22,11 +26,12 @@ export default function ReduxPokedexApp() {
       <BrowserRouter>
         <NavBar />
         <Routes>
-          <Route path="/pokedex" element={<Pokedex key="pokedex" />} />
+          <Route path="/pokedex" element={<Pokedex />} />
           <Route
             path="/pokedex/pokemon/:id"
-            element={<PokemonInfoContainer key="pokeInfo" />}
+            element={<PokemonInfoContainer />}
           />
+          <Route path="/random-pokemon" element={<RandomPokemon />} />
         </Routes>
       </BrowserRouter>
     </Provider>

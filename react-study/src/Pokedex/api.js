@@ -14,7 +14,7 @@ export const pokemonApi = createApi({
       queryTag: "pokedex",
     }),
     getPokemonById: builder.query({
-      query: (name) => `pokemon/${name}`,
+      query: (id) => `pokemon/${id}`,
       transformResponse: (response) => response,
       transformErrorResponse: (response) => response.status,
       queryTag: "pokemon",
